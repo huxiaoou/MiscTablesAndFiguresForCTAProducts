@@ -45,6 +45,7 @@ weight_srs = weight_srs / weight_srs.sum()
 adj_return_df: pd.DataFrame = net_return_df.multiply(weight_srs, axis=1)
 adj_return_df["GH"] = adj_return_df.sum(axis=1)
 adj_return_df.to_csv(os.path.join(output_dir, "adj_return.csv"), float_format="%.6f")
+adj_return_df[["GH"]].to_csv(os.path.join(output_dir, "adj_return_gh.csv"), float_format="%.6f")
 q = adj_return_df.quantile((0, 0.01, 0.02, 0.05, 1))
 
 # --- adjust nav
