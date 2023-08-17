@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from skyrim.winterhold import plot_twinx
-from winterhold2 import CPlotLines
+from winterhold2 import CPlotLines, CPlotLinesTwinxBar
 
 pd.set_option("float_format", "{:.6f}".format)
 pd.set_option("display.width", 0)
@@ -20,6 +20,7 @@ raw_df.rename(mapper={"NH0100.NHF": "南华商品", "000905.SH": "中证500"}, a
 volatility_df = raw_df.rolling(window=21).std(ddof=1) * np.sqrt(252)
 nav_df = (raw_df / 100 + 1).cumprod()
 nav_df = nav_df.loc[nav_df.index >= "2018-01-01"]
+nav_df = nav_df / nav_df.iloc[0]
 
 merged_df = pd.merge(left=nav_df, right=volatility_df, left_index=True, right_index=True, how="left", suffixes=("", "-21日滚动波动率"))
 merged_df: pd.DataFrame = merged_df.loc[merged_df.index < "2023-07-01"]
@@ -29,22 +30,17 @@ print(merged_df.median())
 
 for mkt_idx in ["南华商品", "中证500"]:
     vol_id = mkt_idx + "-21日滚动波动率"
-    plot_twinx(
-        t_plot_df=merged_df[[mkt_idx, vol_id]],
-        t_primary_cols=[mkt_idx], t_secondary_cols=[vol_id],
-        t_primary_kind="line", t_secondary_kind="bar",
-        t_xtick_span=189,
-        t_fig_name=f"volatility_mkt_idx-{mkt_idx}",
-        t_fig_size=(16, 6),
-        t_save_type="PNG",
-        t_save_dir=output_dir,
-        t_style="fast",
-        t_tick_label_size=16,
-        t_tick_label_rotation=0,
-        t_secondary_ylim=(0, 100),
-        t_primary_colormap=None,
-        t_secondary_colormap="gist_gray",
+    artist = CPlotLinesTwinxBar(
+        plot_df=merged_df[[mkt_idx, vol_id]], primary_cols=[mkt_idx], second_cols=[vol_id],
+        fig_size=(16, 6), xtick_count=10,
+        line_color=["#0000CD"],
+        bar_color=["#DC143C"], ylim_twin=(0, 100), bar_width=1, bar_alpha=0.6,
+        fig_name=f"volatility_mkt_idx-{mkt_idx}", fig_save_type="PNG", fig_save_dir=output_dir,
+        style="seaborn-v0_8-poster",
+        xtick_label_size=16, ytick_label_size=16,
+        legend_fontsize=16,
     )
+    artist.plot()
 
 nav_df_since_2021 = nav_df.loc[nav_df.index >= "2021-01-01"]
 artist = CPlotLines(
@@ -53,7 +49,7 @@ artist = CPlotLines(
     fig_size=(18, 4),
     xtick_count=10, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
-    line_color=['#000080', '#4169E1', '#B0C4DE'],
+    line_color=["#000080", "#4169E1", "#B0C4DE"],
     xtick_label_size=18, ytick_label_size=18,
     legend_fontsize=18,
 )

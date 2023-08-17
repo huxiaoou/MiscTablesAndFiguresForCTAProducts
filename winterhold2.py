@@ -159,7 +159,7 @@ class CPlotLinesTwinx(CPlotLines):
         super().__init__(**kwargs)
         self.ax_twin: plt.Axes | None = None
 
-    def _set_twinx_y_axis(self):
+    def __set_twinx_y_axis(self):
         if self.ylim_twin != (None, None):
             y_range = self.ylim_twin[1] - self.ylim_twin[0]
             if self.ytick_count_twin:
@@ -176,6 +176,9 @@ class CPlotLinesTwinx(CPlotLines):
         self.ax_twin.set_ylim(self.ylim_twin[0], self.ylim_twin[1])
         self.ax_twin.tick_params(axis="y", labelsize=self.ytick_label_size_twin, rotation=self.ytick_label_rotation_twin)
 
+        return 0
+
+    def __adjust_legend(self):
         lines0, labels0 = self.ax.get_legend_handles_labels()
         lines1, labels1 = self.ax_twin.get_legend_handles_labels()
         self.ax.legend(lines0 + lines1, labels0 + labels1, loc=self.legend_loc)
@@ -184,24 +187,29 @@ class CPlotLinesTwinx(CPlotLines):
 
     def _core(self):
         super()._core()
-        self._set_twinx_y_axis()
+        self.__set_twinx_y_axis()
+        self.__adjust_legend()
         return 0
 
 
 class CPlotLinesTwinxBar(CPlotLinesTwinx):
-    def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], second_cols: list[str], bar_color: list = None, bar_colormap: str = None, **kwargs):
+    def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], second_cols: list[str],
+                 bar_color: list = None, bar_colormap: str = None, bar_width: float = 0.8, bar_alpha: float = 1.0,
+                 **kwargs):
         self.bar_df = plot_df[second_cols]
         self.ax_twin: plt.Axes | None = None
         self.bar_color = bar_color
         self.bar_colormap = bar_colormap
+        self.bar_width = bar_width
+        self.bar_alpha = bar_alpha
         super().__init__(plot_df=plot_df[primary_cols], **kwargs)
 
     def _core(self):
         self.ax_twin = self.ax.twinx()
         if self.bar_color:
-            self.bar_df.plot.bar(ax=self.ax_twin, color=self.bar_color)
+            self.bar_df.plot.bar(ax=self.ax_twin, color=self.bar_color, width=self.bar_width, alpha=self.bar_alpha)
         else:
-            self.bar_df.plot.bar(ax=self.ax_twin, colormap=self.bar_colormap)
+            self.bar_df.plot.bar(ax=self.ax_twin, colormap=self.bar_colormap, width=self.bar_width, alpha=self.bar_alpha)
         super()._core()
         return 0
 
