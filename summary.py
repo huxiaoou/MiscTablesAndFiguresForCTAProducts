@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from skyrim.riften import CNAV
 from skyrim.winterhold import plot_lines
+from winterhold2 import CPlotLines
 
 pd.set_option("float_format", "{:.6f}".format)
 pd.set_option("display.width", 0)
@@ -108,58 +109,33 @@ print("=" * 120)
 print("绩效摘要")
 print(summary_df)
 
-plot_lines(
-    t_plot_df=net_nav_df[["qian", "yuex", "huxo"]].rename(mapper={
-        "qian": "S1",
-        "yuex": "S2",
-        "huxo": "S3",
+arist = CPlotLines(
+    plot_df=net_nav_df[["qian", "yuex", "huxo"]].rename(mapper={
+        "qian": "子策略一",
+        "yuex": "子策略二",
+        "huxo": "子策略三",
     }, axis=1),
-    t_fig_size=(16, 4),
-    t_fig_name="comb_nav_sub",
-    t_xtick_count=11,
-    t_save_type="PNG", t_tick_label_size=12,
-    t_save_dir=output_dir,
-    t_style="fast",
-    t_colormap="winter",
+    fig_name="comb_nav_sub", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(16, 4),
+    xtick_count=9, xtick_label_rotation=0,
+    style="seaborn-v0_8-poster",
+    line_color=['#000080', '#4169E1', '#B0C4DE'],
+    xtick_label_size=16, ytick_label_size=16,
+    legend_fontsize=16,
 )
+arist.plot()
 
-plot_lines(
-    t_plot_df=net_nav_df_since_2023[["qian", "yuex", "huxo"]].rename(mapper={
-        "qian": "S1",
-        "yuex": "S2",
-        "huxo": "S3",
-    }, axis=1),
-    t_fig_size=(16, 4),
-    t_fig_name="comb_nav_sub_since_2023",
-    t_xtick_count=11,
-    t_save_type="PNG", t_tick_label_size=12,
-    t_save_dir=output_dir,
-    t_style="fast",
-    t_colormap="winter",
+arist = CPlotLines(
+    plot_df=adj_nav_df[["GH"]].rename(mapper={"GH": "国海量化"}, axis=1),
+    fig_name="GH", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(18, 15),
+    xtick_count=12, xtick_label_rotation=60,
+    style="seaborn-v0_8-poster",
+    line_color=['#000080', '#4169E1', '#B0C4DE'],
+    xtick_label_size=20, ytick_label_size=20,
+    legend_fontsize=20,
 )
-
-plot_lines(adj_nav_df[["GH"]].rename(mapper={"GH": "国海量化"}, axis=1), "GH", t_save_dir=output_dir,
-           t_line_width=3,
-           t_fig_size=(16, 15),
-           t_xtick_count=8,
-           t_save_type="png", t_tick_label_size=18,
-           t_style="fast", t_colormap="winter",
-           )
-plot_lines(adj_nav_df_since_2022[["GH"]].rename(mapper={"GH": "国海量化"}, axis=1), "GH_since_2022", t_save_dir=output_dir,
-           t_fig_size=(14, 12),
-           t_xtick_count=6,
-           t_line_width=3,
-           t_save_type="png", t_tick_label_size=18,
-           t_style="fast", t_colormap="winter",
-           )
-
-plot_lines(adj_nav_df_since_2023[["GH"]].rename(mapper={"GH": "国海量化"}, axis=1), "GH_since_2023", t_save_dir=output_dir,
-           t_fig_size=(12, 12),
-           t_xtick_count=6,
-           t_line_width=3,
-           t_save_type="png", t_tick_label_size=18,
-           t_style="fast", t_colormap="winter",
-           )
+arist.plot()
 
 print("=" * 120)
 print("组合策略按年绩效摘要")

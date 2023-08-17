@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import platform
@@ -146,9 +147,6 @@ class CPlotLines(CPlotAdjustAxes):
 
 
 if __name__ == "__main__":
-    import numpy as np
-    import pandas as pd
-
     n = 252 * 5
     df = pd.DataFrame({
         "T": [f"T{_:03d}" for _ in range(n)],
