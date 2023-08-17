@@ -1,13 +1,12 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import platform
 
 this_platform = platform.system().upper()
 if this_platform == "WINDOWS":
-    # to use chinese code
-    plt.rcParams["font.family"] = ["sans-serif"]
+    # to make Chinese code compatible
+    # plt.rcParams["font.family"] = ["sans-serif"]
     plt.rcParams["font.sans-serif"] = ["SimHei"]
     plt.rcParams["axes.unicode_minus"] = False  # 设置正负号
 
@@ -38,20 +37,21 @@ class CPlotBase(object):
 
 
 class CPlotAdjustAxes(CPlotBase):
-    def __init__(self, title: str = "", title_size: int = 32,
-                 xtick_count: int | None = None, xlabel: str = "", xlabel_size: int = 12, xlim: tuple = (None, None),
-                 ytick_count: int | None = None, ylabel: str = "", ylabel_size: int = 12, ylim: tuple = (None, None),
-                 xtick_label_size: int = 12, xtick_label_rotation: int = 0,
-                 ytick_label_size: int = 12, ytick_label_rotation: int = 0,
+    def __init__(self, title: str = None, title_size: int = 32,
+                 xtick_count: int = None, xtick_spread: float = None, xlabel: str = None, xlabel_size: int = 12, xlim: tuple = (None, None),
+                 ytick_count: int = None, ytick_spread: float = None, ylabel: str = None, ylabel_size: int = 12, ylim: tuple = (None, None),
+                 xtick_label_size: int = 12, xtick_label_rotation: int = 0, xtick_label_font: str = "Times New Roman",
+                 ytick_label_size: int = 12, ytick_label_rotation: int = 0, ytick_label_font: str = "Times New Roman",
                  legend_loc: str = "upper left", legend_fontsize: int = 12,
                  **kwargs):
         self.title, self.title_size = title, title_size
-        self.xtick_count, self.ytick_count = xtick_count, ytick_count
+        self.xtick_count, self.xtick_spread = xtick_count, xtick_spread
+        self.ytick_count, self.ytick_spread = ytick_count, ytick_spread
         self.xlabel, self.ylabel = xlabel, ylabel
         self.xlabel_size, self.ylabel_size = xlabel_size, ylabel_size
         self.xlim, self.ylim = xlim, ylim
-        self.xtick_label_size, self.xtick_label_rotation = xtick_label_size, xtick_label_rotation
-        self.ytick_label_size, self.ytick_label_rotation = ytick_label_size, ytick_label_rotation
+        self.xtick_label_size, self.xtick_label_rotation, self.xtick_label_font = xtick_label_size, xtick_label_rotation, xtick_label_font
+        self.ytick_label_size, self.ytick_label_rotation, self.ytick_label_font = ytick_label_size, ytick_label_rotation, ytick_label_font
         self.legend_loc, self.legend_fontsize = legend_loc, legend_fontsize
         super().__init__(**kwargs)
 
@@ -64,30 +64,43 @@ class CPlotAdjustAxes(CPlotBase):
         ax.tick_params(axis="x", labelsize=self.xtick_label_size, rotation=self.xtick_label_rotation)
         ax.tick_params(axis="y", labelsize=self.ytick_label_size, rotation=self.ytick_label_rotation)
         ax.legend(loc=self.legend_loc, fontsize=self.legend_fontsize)
+        plt.xticks(fontname=self.xtick_label_font)
+        plt.yticks(fontname=self.ytick_label_font)
         return 0
 
 
 class CPlotLines(CPlotAdjustAxes):
     def __init__(self, plot_df: pd.DataFrame,
-                 line_width: float = 2, line_style: tuple = (), line_color: tuple = (),
+                 line_width: float = 2, line_style: list = None, line_color: list = None,
                  **kwargs):
         """
 
         :param plot_df:
         :param line_width:
-        :param line_style: ('-', '.', '-.')
+        :param line_style: one or more ('-', '--', '-.', ':')
         :param line_color: if this parameter is used, then do not use colormap and do not specify colors in line_style
                            str, array-like, or dict, optional
                            The color for each of the DataFrame’s columns. Possible values are:
                            A single color string referred to by name, RGB or RGBA code, for instance ‘red’ or ‘#a98d19’.
 
                            A sequence of color strings referred to by name, RGB or RGBA code, which will be used for each column recursively.
-                           For instance [‘green’, ’yellow’] each column’s line will be filled in green or yellow, alternatively.
+                           For instance ['green', 'yellow'] each column’s line will be filled in green or yellow, alternatively.
                            If there is only a single column to be plotted, then only the first color from the color list will be used.
 
                            A dict of the form {column_name:color}, so that each column will be
                            colored accordingly. For example, if your columns are called a and b, then passing {‘a’: ‘green’, ‘b’: ‘red’}
                            will color lines for column 'a' in green and lines for column 'b' in red.
+
+                           short name for color {
+                                'b':blue,
+                                'g':green,
+                                'r':red,
+                                'c':cyan,
+                                'm':magenta,
+                                'y':yellow,
+                                'k':black,
+                                'w':white,
+                            }
         :param kwargs:
         """
         self.plot_df = plot_df
@@ -98,19 +111,36 @@ class CPlotLines(CPlotAdjustAxes):
         super().__init__(**kwargs)
 
     def _set_axes(self, ax: plt.Axes):
-        if self.xtick_count is not None:
-            xticks = np.arange(0, self.data_len, max(int(self.data_len / self.xtick_count), 1))
+        if self.xtick_count:
+            xticks = np.arange(0, self.data_len, max(int((self.data_len - 1) / self.xtick_count), 1))
+        elif self.xtick_spread:
+            xticks = np.arange(0, self.data_len, self.xtick_spread)
+        else:
+            xticks = None
+        if xticks is not None:
             xticklabels = self.plot_df.index[xticks]
             ax.set_xticks(xticks)
             ax.set_xticklabels(xticklabels)
+
+        if self.ylim != (None, None):
+            y_range = self.ylim[1] - self.ylim[0]
+            if self.ytick_count:
+                yticks = np.arange(self.ylim[0], self.ylim[1], y_range / self.ytick_count)
+            elif self.ytick_spread:
+                yticks = np.arange(self.ylim[0], self.ylim[1], self.ytick_spread)
+            else:
+                yticks = None
+
+            if yticks is not None:
+                ax.set_yticks(yticks)
         super()._set_axes(ax)
         return 0
 
     def _core(self, ax: plt.Axes):
         if self.line_color:
-            self.plot_df.plot.line(ax=ax, lw=self.line_width, style=self.line_style if self.line_style else ["-"], color=self.line_color)
+            self.plot_df.plot.line(ax=ax, lw=self.line_width, style=self.line_style if self.line_style else "-", color=self.line_color)
         else:
-            self.plot_df.plot.line(ax=ax, lw=self.line_width, style=self.line_style if self.line_style else ["-"], colormap=self.color_map)
+            self.plot_df.plot.line(ax=ax, lw=self.line_width, style=self.line_style if self.line_style else "-", colormap=self.color_map)
         self._set_axes(ax)
         return 0
 
@@ -119,18 +149,28 @@ if __name__ == "__main__":
     import numpy as np
     import pandas as pd
 
-    n = 200
+    n = 252 * 5
     df = pd.DataFrame({
         "T": [f"T{_:03d}" for _ in range(n)],
-        "val1": np.random.random(n) * 2,
-        "val2": 1 + np.random.random(n),
-        "val3": 2 + np.random.random(n),
+        "上证50": np.cumprod((np.random.random(n) * 2 - 1) / 100 + 1),
+        "沪深300": np.cumprod((np.random.random(n) * 2 - 1) / 100 + 1),
+        "中证500": np.cumprod((np.random.random(n) * 2 - 1) / 100 + 1),
+        "南华商品": np.cumprod((np.random.random(n) * 2 - 1) / 100 + 1),
+        "TEST": np.random.random(n) * 2 - 1,
     }).set_index("T")
     print(df.tail())
 
-    arist = CPlotLines(plot_df=df, fig_name="test",
-                       # line_style=('-', '-.'),
-                       # line_color=('g', 'y', 'b'),
-                       # color_map="jet",
-                       title="aaa")
+    arist = CPlotLines(
+        plot_df=df, fig_name="test", style="seaborn-v0_8-poster",
+        # xtick_count=10, xtick_label_rotation=90,
+        # ylim=(0.5, 2.1), ytick_spread=0.25,
+        ylim=(-1, 2.1), ytick_count=10,
+        # line_style=['-', '--', '-.', ':', ],
+        # line_width=2,
+        # line_color=['r', 'g', 'b'],
+        line_color=['#A62525', '#188A06', '#06708A', '#DAF90E'],
+        # color_map="winter",
+        xtick_label_size=16, ytick_label_size=16,
+        # title="指数走势", xlabel='xxx', ylabel='yyy',
+    )
     arist.plot()
