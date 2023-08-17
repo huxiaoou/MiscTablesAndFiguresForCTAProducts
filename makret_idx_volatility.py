@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
-from skyrim.winterhold import plot_twinx, plot_lines
+from skyrim.winterhold import plot_twinx
+from winterhold2 import CPlotLines
 
 pd.set_option("float_format", "{:.6f}".format)
 pd.set_option("display.width", 0)
@@ -46,11 +47,14 @@ for mkt_idx in ["南华商品", "中证500"]:
     )
 
 nav_df_since_2021 = nav_df.loc[nav_df.index >= "2021-01-01"]
-plot_lines(t_plot_df=nav_df_since_2021[["南华商品"]],
-           t_fig_name="南华商品_since_2021",
-           t_fig_size=(18, 4),
-           t_save_type="PNG",
-           t_save_dir=output_dir,
-           t_style="fast",
-           t_colormap="winter",
-           )
+artist = CPlotLines(
+    plot_df=nav_df_since_2021[["南华商品"]],
+    fig_name="南华商品_since_2021", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(18, 4),
+    xtick_count=10, xtick_label_rotation=0,
+    style="seaborn-v0_8-poster",
+    line_color=['#000080', '#4169E1', '#B0C4DE'],
+    xtick_label_size=18, ytick_label_size=18,
+    legend_fontsize=18,
+)
+artist.plot()

@@ -108,7 +108,7 @@ print("=" * 120)
 print("绩效摘要")
 print(summary_df)
 
-arist = CPlotLines(
+artist = CPlotLines(
     plot_df=net_nav_df[["qian", "yuex", "huxo"]].rename(mapper={
         "qian": "子策略一",
         "yuex": "子策略二",
@@ -122,9 +122,9 @@ arist = CPlotLines(
     xtick_label_size=16, ytick_label_size=16,
     legend_fontsize=16,
 )
-arist.plot()
+artist.plot()
 
-arist = CPlotLines(
+artist = CPlotLines(
     plot_df=adj_nav_df[["GH"]].rename(mapper={"GH": "国海量化"}, axis=1),
     fig_name="GH", fig_save_dir=output_dir, fig_save_type="PNG",
     fig_size=(18, 15),
@@ -134,7 +134,7 @@ arist = CPlotLines(
     xtick_label_size=20, ytick_label_size=20,
     legend_fontsize=20,
 )
-arist.plot()
+artist.plot()
 
 print("=" * 120)
 print("组合策略按年绩效摘要")

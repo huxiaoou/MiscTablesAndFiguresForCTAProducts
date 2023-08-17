@@ -52,7 +52,7 @@ summary_df = summary_df[performance_indicators]
 print(summary_df)
 summary_df.to_csv(os.path.join(output_dir, "comparison_funds_performance.csv"), index_label="funds", float_format="%.2f")
 
-arist = CPlotLines(
+artist = CPlotLines(
     plot_df=merged_df.rename(mapper={"GH": "国海量化"}, axis=1),
     fig_name="comparison_funds_nav", fig_save_dir=output_dir, fig_save_type="PNG",
     fig_size=(19, 4),
@@ -62,4 +62,4 @@ arist = CPlotLines(
     xtick_label_size=16, ytick_label_size=16,
     legend_fontsize=16,
 )
-arist.plot()
+artist.plot()

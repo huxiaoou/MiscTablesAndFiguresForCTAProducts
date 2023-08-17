@@ -13,23 +13,24 @@ if this_platform == "WINDOWS":
 
 
 class CPlotBase(object):
-    def __init__(self, fig_size: tuple = (16, 9), fig_name: str = "fig_name",
-                 style: str = "Solarize_Light2", color_map: str | None = None,
+    def __init__(self, fig_size: tuple = (16, 9), fig_name: str = None,
+                 style: str = "Solarize_Light2", colormap: str = None,
                  fig_save_dir: str = ".", fig_save_type: str = "pdf"):
         self.fig_size = fig_size
         self.fig_name = fig_name
         self.style = style
-        self.color_map = color_map
+        self.colormap = colormap
         self.fig_save_dir = fig_save_dir
         self.fig_save_type = fig_save_type
+        self.ax: plt.Axes | None = None
 
-    def _core(self, ax: plt.Axes):
+    def _core(self):
         pass
 
     def plot(self):
         plt.style.use(self.style)
-        fig0, ax0 = plt.subplots(figsize=self.fig_size)
-        self._core(ax0)
+        fig0, self.ax = plt.subplots(figsize=self.fig_size)
+        self._core()
         fig0_name = self.fig_name + "." + self.fig_save_type
         fig0_path = os.path.join(self.fig_save_dir, fig0_name)
         fig0.savefig(fig0_path, bbox_inches="tight")
@@ -56,23 +57,22 @@ class CPlotAdjustAxes(CPlotBase):
         self.legend_loc, self.legend_fontsize = legend_loc, legend_fontsize
         super().__init__(**kwargs)
 
-    def _set_axes(self, ax: plt.Axes):
-        ax.set_title(self.title, fontsize=self.title_size)
-        ax.set_xlabel(self.xlabel, fontsize=self.xlabel_size)
-        ax.set_ylabel(self.ylabel, fontsize=self.ylabel_size)
-        ax.set_xlim(self.xlim[0], self.xlim[1])
-        ax.set_ylim(self.ylim[0], self.ylim[1])
-        ax.tick_params(axis="x", labelsize=self.xtick_label_size, rotation=self.xtick_label_rotation)
-        ax.tick_params(axis="y", labelsize=self.ytick_label_size, rotation=self.ytick_label_rotation)
-        ax.legend(loc=self.legend_loc, fontsize=self.legend_fontsize)
+    def _set_axes(self):
+        self.ax.set_title(self.title, fontsize=self.title_size)
+        self.ax.set_xlabel(self.xlabel, fontsize=self.xlabel_size)
+        self.ax.set_ylabel(self.ylabel, fontsize=self.ylabel_size)
+        self.ax.set_xlim(self.xlim[0], self.xlim[1])
+        self.ax.set_ylim(self.ylim[0], self.ylim[1])
+        self.ax.tick_params(axis="x", labelsize=self.xtick_label_size, rotation=self.xtick_label_rotation)
+        self.ax.tick_params(axis="y", labelsize=self.ytick_label_size, rotation=self.ytick_label_rotation)
+        self.ax.legend(loc=self.legend_loc, fontsize=self.legend_fontsize)
         plt.xticks(fontname=self.xtick_label_font)
         plt.yticks(fontname=self.ytick_label_font)
         return 0
 
 
 class CPlotLines(CPlotAdjustAxes):
-    def __init__(self, plot_df: pd.DataFrame,
-                 line_width: float = 2, line_style: list = None, line_color: list = None,
+    def __init__(self, plot_df: pd.DataFrame, line_width: float = 2, line_style: list = None, line_color: list = None,
                  **kwargs):
         """
 
@@ -111,7 +111,7 @@ class CPlotLines(CPlotAdjustAxes):
         self.line_color = line_color
         super().__init__(**kwargs)
 
-    def _set_axes(self, ax: plt.Axes):
+    def _set_axes(self):
         if self.xtick_count:
             xticks = np.arange(0, self.data_len, max(int((self.data_len - 1) / self.xtick_count), 1))
         elif self.xtick_spread:
@@ -120,8 +120,8 @@ class CPlotLines(CPlotAdjustAxes):
             xticks = None
         if xticks is not None:
             xticklabels = self.plot_df.index[xticks]
-            ax.set_xticks(xticks)
-            ax.set_xticklabels(xticklabels)
+            self.ax.set_xticks(xticks)
+            self.ax.set_xticklabels(xticklabels)
 
         if self.ylim != (None, None):
             y_range = self.ylim[1] - self.ylim[0]
@@ -133,16 +133,76 @@ class CPlotLines(CPlotAdjustAxes):
                 yticks = None
 
             if yticks is not None:
-                ax.set_yticks(yticks)
-        super()._set_axes(ax)
+                self.ax.set_yticks(yticks)
+        super()._set_axes()
         return 0
 
-    def _core(self, ax: plt.Axes):
+    def _core(self):
         if self.line_color:
-            self.plot_df.plot.line(ax=ax, lw=self.line_width, style=self.line_style if self.line_style else "-", color=self.line_color)
+            self.plot_df.plot.line(ax=self.ax, lw=self.line_width, style=self.line_style if self.line_style else "-", color=self.line_color)
         else:
-            self.plot_df.plot.line(ax=ax, lw=self.line_width, style=self.line_style if self.line_style else "-", colormap=self.color_map)
-        self._set_axes(ax)
+            self.plot_df.plot.line(ax=self.ax, lw=self.line_width, style=self.line_style if self.line_style else "-", colormap=self.colormap)
+        self._set_axes()
+        return 0
+
+
+class CPlotLinesTwinx(CPlotLines):
+    def __init__(self,
+                 ytick_count_twin: int = None, ytick_spread_twin: float = None, ylabel_twin: str = None, ylabel_size_twin: int = 12, ylim_twin: tuple = (None, None),
+                 ytick_label_size_twin: int = 12, ytick_label_rotation_twin: int = 0,
+                 **kwargs):
+        self.ytick_count_twin, self.ytick_spread_twin = ytick_count_twin, ytick_spread_twin
+        self.ylabel_twin = ylabel_twin
+        self.ylabel_size_twin = ylabel_size_twin
+        self.ylim_twin = ylim_twin
+        self.ytick_label_size_twin, self.ytick_label_rotation_twin = ytick_label_size_twin, ytick_label_rotation_twin
+        super().__init__(**kwargs)
+        self.ax_twin: plt.Axes | None = None
+
+    def _set_twinx_y_axis(self):
+        if self.ylim_twin != (None, None):
+            y_range = self.ylim_twin[1] - self.ylim_twin[0]
+            if self.ytick_count_twin:
+                yticks = np.arange(self.ylim_twin[0], self.ylim_twin[1], y_range / self.ytick_count_twin)
+            elif self.ytick_spread_twin:
+                yticks = np.arange(self.ylim_twin[0], self.ylim_twin[1], self.ytick_spread_twin)
+            else:
+                yticks = None
+
+            if yticks is not None:
+                self.ax_twin.set_yticks(yticks)
+
+        self.ax_twin.set_ylabel(self.ylabel_twin, fontsize=self.ylabel_size_twin)
+        self.ax_twin.set_ylim(self.ylim_twin[0], self.ylim_twin[1])
+        self.ax_twin.tick_params(axis="y", labelsize=self.ytick_label_size_twin, rotation=self.ytick_label_rotation_twin)
+
+        lines0, labels0 = self.ax.get_legend_handles_labels()
+        lines1, labels1 = self.ax_twin.get_legend_handles_labels()
+        self.ax.legend(lines0 + lines1, labels0 + labels1, loc=self.legend_loc)
+        self.ax_twin.get_legend().remove()
+        return 0
+
+    def _core(self):
+        super()._core()
+        self._set_twinx_y_axis()
+        return 0
+
+
+class CPlotLinesTwinxBar(CPlotLinesTwinx):
+    def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], second_cols: list[str], bar_color: list = None, bar_colormap: str = None, **kwargs):
+        self.bar_df = plot_df[second_cols]
+        self.ax_twin: plt.Axes | None = None
+        self.bar_color = bar_color
+        self.bar_colormap = bar_colormap
+        super().__init__(plot_df=plot_df[primary_cols], **kwargs)
+
+    def _core(self):
+        self.ax_twin = self.ax.twinx()
+        if self.bar_color:
+            self.bar_df.plot.bar(ax=self.ax_twin, color=self.bar_color)
+        else:
+            self.bar_df.plot.bar(ax=self.ax_twin, colormap=self.bar_colormap)
+        super()._core()
         return 0
 
 
@@ -158,7 +218,7 @@ if __name__ == "__main__":
     }).set_index("T")
     print(df.tail())
 
-    arist = CPlotLines(
+    artist = CPlotLines(
         plot_df=df, fig_name="test", style="seaborn-v0_8-poster",
         # xtick_count=10, xtick_label_rotation=90,
         # ylim=(0.5, 2.1), ytick_spread=0.25,
@@ -171,4 +231,14 @@ if __name__ == "__main__":
         xtick_label_size=16, ytick_label_size=16,
         # title="指数走势", xlabel='xxx', ylabel='yyy',
     )
-    arist.plot()
+    artist.plot()
+
+    artist = CPlotLinesTwinxBar(
+        plot_df=df, primary_cols=["沪深300", "中证500", "南华商品"], second_cols=["TEST"],
+        bar_color=["#DC143C"],
+        fig_name="test_twin_bar", style="seaborn-v0_8-poster",
+        xtick_count=12,
+        ytick_count_twin=6, ytick_spread_twin=None, ylabel_twin="bar-test", ylabel_size_twin=36, ylim_twin=(-3, 3),
+        ytick_label_size_twin=24, ytick_label_rotation_twin=90,
+    )
+    artist.plot()
