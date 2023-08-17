@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 from skyrim.riften import CNAV
-from skyrim.winterhold import plot_lines
 from winterhold2 import CPlotLines
 
 pd.set_option("float_format", "{:.6f}".format)
