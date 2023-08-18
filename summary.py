@@ -1,7 +1,30 @@
 import os
+import numpy as np
 import pandas as pd
 from skyrim.riften import CNAV
 from winterhold2 import CPlotLines, CPlotSingleNavWithDrawdown
+
+
+def get_corr(df, x: str, y: str, w: int):
+    x_aver = df[x].rolling(window=w).mean()
+    y_aver = df[y].rolling(window=w).mean()
+    xy_aver = (df[x] * df[y]).rolling(window=w).mean()
+    xx_aver = (df[x] * df[x]).rolling(window=w).mean()
+    yy_aver = (df[y] * df[y]).rolling(window=w).mean()
+    cov_xy = xy_aver - x_aver * y_aver
+    cov_xx = xx_aver - x_aver * x_aver
+    cov_yy = yy_aver - y_aver * y_aver
+    return cov_xy / np.sqrt(cov_xx * cov_yy)
+
+
+def get_rolling_corr(df: pd.DataFrame, win: int = 21) -> pd.DataFrame:
+    res = {}
+    for v0 in df.columns:
+        for v1 in df.columns:
+            if v0 < v1:
+                res[f"{v0}-{v1}"] = get_corr(df, v0, v1, win)
+    return pd.DataFrame(res)
+
 
 pd.set_option("float_format", "{:.6f}".format)
 pd.set_option("display.width", 0)
@@ -69,7 +92,7 @@ summary_df.to_csv(
     index_label="strategy", float_format="%.6f",
 )
 
-# by year
+# --- by year
 summary_by_year_data = {}
 adj_return_df["trade_year"] = adj_return_df.index.map(lambda z: z[0:4])
 for trade_year, trade_year_df in adj_return_df.groupby(by="trade_year"):
@@ -83,6 +106,14 @@ summary_by_year_df.to_csv(
     index_label="trade_year", float_format="%.6f",
 )
 adj_return_df.drop(axis=1, labels="trade_year", inplace=True)
+
+# --- rolling corr
+renamed_adj_ret_df = adj_return_df[list(sub_return_files)].rename(mapper={
+    "qian": "子策略一",
+    "yuex": "子策略二",
+    "huxo": "子策略三",
+}, axis=1)
+adj_ret_rolling_cor = get_rolling_corr(renamed_adj_ret_df, win=63)
 
 print("=" * 120)
 print("调整前日收益率")
@@ -108,6 +139,10 @@ print("=" * 120)
 print("绩效摘要")
 print(summary_df)
 
+print("=" * 120)
+print("滚动相关性")
+print(adj_ret_rolling_cor)
+
 artist = CPlotLines(
     plot_df=net_nav_df[["qian", "yuex", "huxo"]].rename(mapper={
         "qian": "子策略一",
@@ -121,6 +156,18 @@ artist = CPlotLines(
     line_color=['#000080', '#4169E1', '#B0C4DE'],
     xtick_label_size=16, ytick_label_size=16,
     legend_fontsize=16,
+)
+artist.plot()
+
+artist = CPlotLines(
+    plot_df=adj_ret_rolling_cor,
+    fig_name="adj_ret_rolling_corr", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(16, 7),
+    xtick_count=9, xtick_label_rotation=0,
+    style="seaborn-v0_8-poster",
+    line_color=['#000080', '#4169E1', '#B0C4DE'],
+    xtick_label_size=16, ytick_label_size=16,
+    legend_fontsize=16, legend_loc="lower center",
 )
 artist.plot()
 
