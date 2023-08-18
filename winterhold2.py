@@ -58,6 +58,18 @@ class CPlotAdjustAxes(CPlotBase):
         super().__init__(**kwargs)
 
     def _set_axes(self):
+        if self.ylim != (None, None):
+            y_range = self.ylim[1] - self.ylim[0]
+            if self.ytick_count:
+                yticks = np.arange(self.ylim[0], self.ylim[1], y_range / self.ytick_count)
+            elif self.ytick_spread:
+                yticks = np.arange(self.ylim[0], self.ylim[1], self.ytick_spread)
+            else:
+                yticks = None
+
+            if yticks is not None:
+                self.ax.set_yticks(yticks)
+
         self.ax.set_title(self.title, fontsize=self.title_size)
         self.ax.set_xlabel(self.xlabel, fontsize=self.xlabel_size)
         self.ax.set_ylabel(self.ylabel, fontsize=self.ylabel_size)
@@ -71,12 +83,32 @@ class CPlotAdjustAxes(CPlotBase):
         return 0
 
 
-class CPlotLines(CPlotAdjustAxes):
-    def __init__(self, plot_df: pd.DataFrame, line_width: float = 2, line_style: list = None, line_color: list = None,
+class CPlotFromDataFrame(CPlotAdjustAxes):
+    def __init__(self, plot_df: pd.DataFrame, **kwargs):
+        self.plot_df = plot_df
+        self.data_len = len(plot_df)
+        super().__init__(**kwargs)
+
+    def _set_axes(self):
+        if self.xtick_count:
+            xticks = np.arange(0, self.data_len, max(int((self.data_len - 1) / self.xtick_count), 1))
+        elif self.xtick_spread:
+            xticks = np.arange(0, self.data_len, self.xtick_spread)
+        else:
+            xticks = None
+        if xticks is not None:
+            xticklabels = self.plot_df.index[xticks]
+            self.ax.set_xticks(xticks)
+            self.ax.set_xticklabels(xticklabels)
+        super()._set_axes()
+        return 0
+
+
+class CPlotLines(CPlotFromDataFrame):
+    def __init__(self, line_width: float = 2, line_style: list = None, line_color: list = None,
                  **kwargs):
         """
 
-        :param plot_df:
         :param line_width:
         :param line_style: one or more ('-', '--', '-.', ':')
         :param line_color: if this parameter is used, then do not use colormap and do not specify colors in line_style
@@ -104,44 +136,34 @@ class CPlotLines(CPlotAdjustAxes):
                             }
         :param kwargs:
         """
-        self.plot_df = plot_df
-        self.data_len = len(plot_df)
+
         self.line_width = line_width
         self.line_style = line_style
         self.line_color = line_color
         super().__init__(**kwargs)
-
-    def _set_axes(self):
-        if self.xtick_count:
-            xticks = np.arange(0, self.data_len, max(int((self.data_len - 1) / self.xtick_count), 1))
-        elif self.xtick_spread:
-            xticks = np.arange(0, self.data_len, self.xtick_spread)
-        else:
-            xticks = None
-        if xticks is not None:
-            xticklabels = self.plot_df.index[xticks]
-            self.ax.set_xticks(xticks)
-            self.ax.set_xticklabels(xticklabels)
-
-        if self.ylim != (None, None):
-            y_range = self.ylim[1] - self.ylim[0]
-            if self.ytick_count:
-                yticks = np.arange(self.ylim[0], self.ylim[1], y_range / self.ytick_count)
-            elif self.ytick_spread:
-                yticks = np.arange(self.ylim[0], self.ylim[1], self.ytick_spread)
-            else:
-                yticks = None
-
-            if yticks is not None:
-                self.ax.set_yticks(yticks)
-        super()._set_axes()
-        return 0
 
     def _core(self):
         if self.line_color:
             self.plot_df.plot.line(ax=self.ax, lw=self.line_width, style=self.line_style if self.line_style else "-", color=self.line_color)
         else:
             self.plot_df.plot.line(ax=self.ax, lw=self.line_width, style=self.line_style if self.line_style else "-", colormap=self.colormap)
+        self._set_axes()
+        return 0
+
+
+class CPlotBars(CPlotFromDataFrame):
+    def __init__(self, bar_color: list = None, bar_width: float = 0.8, bar_alpha: float = 1.0,
+                 **kwargs):
+        self.bar_color = bar_color
+        self.bar_width = bar_width
+        self.bar_alpha = bar_alpha
+        super().__init__(**kwargs)
+
+    def _core(self):
+        if self.bar_color:
+            self.plot_df.plot.bar(ax=self.ax, color=self.bar_color, width=self.bar_width, alpha=self.bar_alpha)
+        else:
+            self.plot_df.plot.bar(ax=self.ax, colormap=self.colormap, width=self.bar_width, alpha=self.bar_alpha)
         self._set_axes()
         return 0
 
@@ -194,7 +216,7 @@ class CPlotLinesTwinx(CPlotLines):
 
 class CPlotLinesTwinxBar(CPlotLinesTwinx):
     def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], secondary_cols: list[str],
-                 bar_color: list = None, bar_colormap: str = None, bar_width: float = 0.8, bar_alpha: float = 1.0,
+                 bar_color: list = None, bar_width: float = 0.8, bar_alpha: float = 1.0, bar_colormap: str = None,
                  **kwargs):
         self.bar_df = plot_df[secondary_cols]
         self.ax_twin: plt.Axes | None = None
