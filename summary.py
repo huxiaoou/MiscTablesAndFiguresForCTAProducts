@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from skyrim.riften import CNAV
-from winterhold2 import CPlotLines
+from winterhold2 import CPlotLines, CPlotSingleNavWithDrawdown
 
 pd.set_option("float_format", "{:.6f}".format)
 pd.set_option("display.width", 0)
@@ -124,14 +124,14 @@ artist = CPlotLines(
 )
 artist.plot()
 
-artist = CPlotLines(
-    plot_df=adj_nav_df[["GH"]].rename(mapper={"GH": "国海量化"}, axis=1),
-    fig_name="GH", fig_save_dir=output_dir, fig_save_type="PNG",
-    fig_size=(18, 15),
-    xtick_count=12, xtick_label_rotation=60,
-    style="seaborn-v0_8-poster",
-    line_color=['#000080', '#4169E1', '#B0C4DE'],
-    xtick_label_size=20, ytick_label_size=20,
+artist = CPlotSingleNavWithDrawdown(
+    nav_srs=adj_nav_df["GH"],
+    nav_label="国海量化", drawdown_label="回撤幅度",
+    fig_name="GH", fig_save_dir=output_dir, fig_save_type="PNG", style="seaborn-v0_8-poster",
+    fig_size=(18, 17),
+    xtick_count=8, xtick_label_rotation=0,
+    nav_line_color=['#000080'], drawdown_color=["#4169E1"], drawdown_alpha=0.5,
+    xtick_label_size=20, ytick_label_size=20, ytick_label_size_twin=20,
     legend_fontsize=20,
 )
 artist.plot()

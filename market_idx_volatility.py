@@ -31,7 +31,7 @@ print(merged_df.median())
 for mkt_idx in ["南华商品", "中证500"]:
     vol_id = mkt_idx + "-21日滚动波动率"
     artist = CPlotLinesTwinxBar(
-        plot_df=merged_df[[mkt_idx, vol_id]], primary_cols=[mkt_idx], second_cols=[vol_id],
+        plot_df=merged_df[[mkt_idx, vol_id]], primary_cols=[mkt_idx], secondary_cols=[vol_id],
         fig_size=(16, 6), xtick_count=10,
         line_color=["#0000CD"],
         bar_color=["#DC143C"], ylim_twin=(0, 100), bar_width=1, bar_alpha=0.6,

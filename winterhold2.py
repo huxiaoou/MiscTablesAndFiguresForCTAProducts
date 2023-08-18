@@ -14,7 +14,7 @@ if this_platform == "WINDOWS":
 
 class CPlotBase(object):
     def __init__(self, fig_size: tuple = (16, 9), fig_name: str = None,
-                 style: str = "Solarize_Light2", colormap: str = None,
+                 style: str = "seaborn-v0_8-poster", colormap: str = None,
                  fig_save_dir: str = ".", fig_save_type: str = "pdf"):
         self.fig_size = fig_size
         self.fig_name = fig_name
@@ -193,10 +193,10 @@ class CPlotLinesTwinx(CPlotLines):
 
 
 class CPlotLinesTwinxBar(CPlotLinesTwinx):
-    def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], second_cols: list[str],
+    def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], secondary_cols: list[str],
                  bar_color: list = None, bar_colormap: str = None, bar_width: float = 0.8, bar_alpha: float = 1.0,
                  **kwargs):
-        self.bar_df = plot_df[second_cols]
+        self.bar_df = plot_df[secondary_cols]
         self.ax_twin: plt.Axes | None = None
         self.bar_color = bar_color
         self.bar_colormap = bar_colormap
@@ -212,6 +212,24 @@ class CPlotLinesTwinxBar(CPlotLinesTwinx):
             self.bar_df.plot.bar(ax=self.ax_twin, colormap=self.bar_colormap, width=self.bar_width, alpha=self.bar_alpha)
         super()._core()
         return 0
+
+
+class CPlotSingleNavWithDrawdown(CPlotLinesTwinxBar):
+    def __init__(self, nav_srs: pd.Series, nav_label: str, drawdown_label: str,
+                 nav_line_color: list = None, nav_line_width: float = 2.0,
+                 drawdown_color: list = None, drawdown_alpha: float = 0.6,
+                 **kwargs):
+        drawdown_srs = 1 - nav_srs / nav_srs.cummax()
+        drawdown_ylim = (drawdown_srs.max() * 5, 0)
+        super().__init__(plot_df=pd.DataFrame({
+            nav_label: nav_srs,
+            drawdown_label: drawdown_srs,
+        }), primary_cols=[nav_label], secondary_cols=[drawdown_label],
+            bar_color=drawdown_color, bar_alpha=drawdown_alpha,
+            line_width=nav_line_width, line_color=nav_line_color,
+            ylim_twin=drawdown_ylim,
+            legend_loc="lower center",
+            **kwargs)
 
 
 if __name__ == "__main__":
@@ -242,11 +260,18 @@ if __name__ == "__main__":
     artist.plot()
 
     artist = CPlotLinesTwinxBar(
-        plot_df=df, primary_cols=["沪深300", "中证500", "南华商品"], second_cols=["TEST"],
+        plot_df=df, primary_cols=["沪深300", "中证500", "南华商品"], secondary_cols=["TEST"],
         bar_color=["#DC143C"],
         fig_name="test_twin_bar", style="seaborn-v0_8-poster",
         xtick_count=12,
         ytick_count_twin=6, ytick_spread_twin=None, ylabel_twin="bar-test", ylabel_size_twin=36, ylim_twin=(-3, 3),
         ytick_label_size_twin=24, ytick_label_rotation_twin=90,
     )
+    artist.plot()
+
+    artist = CPlotSingleNavWithDrawdown(nav_srs=df["上证50"], nav_label="上证50", drawdown_label="回撤",
+                                        nav_line_color=["#00008B"], drawdown_color=["#DC143C"],
+                                        xtick_count=12,
+                                        fig_name="test_nav_drawdown", style="seaborn-v0_8-poster",
+                                        )
     artist.plot()
