@@ -35,16 +35,15 @@ raw_df.set_index("trade_date", inplace=True)
 print(raw_df)
 
 artist = CPlotLinesTwinxBar(
-    plot_df=raw_df[["Y.DCE", "Strategy", "TS"]],
-    primary_cols=["Y.DCE", "Strategy"], secondary_cols=["TS"],
+    plot_df=raw_df[["Y.DCE", "Strategy", "TS"]].rename(mapper={"Y.DCE": "豆油指数", "Strategy": "策略净值", "TS": "TS因子"}, axis=1),
+    primary_cols=["豆油指数", "策略净值"], secondary_cols=["TS因子"],
     line_color=["#4169E1", "#8B4513"], line_style=["-.", "-"],
     bar_color=["#B0C4DE"], bar_width=1.0, bar_alpha=0.6,
     xtick_spread=252,
     fig_name="strategy_example", fig_save_type="PNG", fig_save_dir=output_dir,
     style="seaborn-v0_8-poster",
-    xtick_label_size=16, ytick_label_size=16, ytick_label_size_twin=16,
-    xtick_count=9,
-    fig_size=(16, 12),
+    xtick_count=9, xtick_label_size=16, ytick_label_size=16, ytick_label_size_twin=16,
+    fig_size=(27, 6),
 )
 artist.plot()
 
@@ -56,6 +55,6 @@ for ins in ["Y", "AU"]:
         fig_name=f"ts_example_{ins}", fig_save_type="PNG", fig_save_dir=output_dir,
         line_color=["#00008B"],
         xtick_label_size=20, ytick_label_size=20,
-        fig_size=(16, 3),
+        fig_size=(17, 3),
     )
     artist.plot()

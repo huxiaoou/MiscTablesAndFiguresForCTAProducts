@@ -22,6 +22,7 @@ class CPlotBase(object):
         self.colormap = colormap
         self.fig_save_dir = fig_save_dir
         self.fig_save_type = fig_save_type
+        self.fig: plt.Figure | None = None
         self.ax: plt.Axes | None = None
 
     def _core(self):
@@ -29,12 +30,12 @@ class CPlotBase(object):
 
     def plot(self):
         plt.style.use(self.style)
-        fig0, self.ax = plt.subplots(figsize=self.fig_size)
+        self.fig, self.ax = plt.subplots(figsize=self.fig_size)
         self._core()
         fig0_name = self.fig_name + "." + self.fig_save_type
         fig0_path = os.path.join(self.fig_save_dir, fig0_name)
-        fig0.savefig(fig0_path, bbox_inches="tight")
-        plt.close(fig0)
+        self.fig.savefig(fig0_path, bbox_inches="tight")
+        plt.close(self.fig)
         return 0
 
 
@@ -172,12 +173,14 @@ class CPlotLinesTwinx(CPlotLines):
     def __init__(self,
                  ytick_count_twin: int = None, ytick_spread_twin: float = None, ylabel_twin: str = None, ylabel_size_twin: int = 12, ylim_twin: tuple = (None, None),
                  ytick_label_size_twin: int = 12, ytick_label_rotation_twin: int = 0,
+                 ygrid_visible: bool = False,
                  **kwargs):
         self.ytick_count_twin, self.ytick_spread_twin = ytick_count_twin, ytick_spread_twin
         self.ylabel_twin = ylabel_twin
         self.ylabel_size_twin = ylabel_size_twin
         self.ylim_twin = ylim_twin
         self.ytick_label_size_twin, self.ytick_label_rotation_twin = ytick_label_size_twin, ytick_label_rotation_twin
+        self.ygrid_visible = ygrid_visible
         super().__init__(**kwargs)
         self.ax_twin: plt.Axes | None = None
 
@@ -197,13 +200,14 @@ class CPlotLinesTwinx(CPlotLines):
         self.ax_twin.set_ylabel(self.ylabel_twin, fontsize=self.ylabel_size_twin)
         self.ax_twin.set_ylim(self.ylim_twin[0], self.ylim_twin[1])
         self.ax_twin.tick_params(axis="y", labelsize=self.ytick_label_size_twin, rotation=self.ytick_label_rotation_twin)
-
+        self.ax_twin.grid(visible=self.ygrid_visible, axis="y")
         return 0
 
     def __adjust_legend(self):
-        lines0, labels0 = self.ax.get_legend_handles_labels()
-        lines1, labels1 = self.ax_twin.get_legend_handles_labels()
-        self.ax.legend(lines0 + lines1, labels0 + labels1, loc=self.legend_loc)
+        if self.legend_loc is not None:
+            lines0, labels0 = self.ax.get_legend_handles_labels()
+            lines1, labels1 = self.ax_twin.get_legend_handles_labels()
+            self.ax.legend(lines0 + lines1, labels0 + labels1, loc=self.legend_loc)
         self.ax_twin.get_legend().remove()
         return 0
 
