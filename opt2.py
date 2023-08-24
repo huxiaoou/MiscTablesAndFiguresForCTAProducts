@@ -65,7 +65,7 @@ def opt_static_eql_vol(net_ret_df: pd.DataFrame):
     net_return_std = net_ret_df.std()
     weight_srs = 1 / net_return_std
     weight_srs = weight_srs / weight_srs.sum()
-    print("eql_vol weight:", weight_srs.values)
+    # print("eql_vol weight:", weight_srs.values)
     adj_return_df: pd.DataFrame = net_ret_df.multiply(weight_srs, axis=1)
     return adj_return_df.sum(axis=1)
 
@@ -76,7 +76,7 @@ def opt_static_min_uty(net_ret_df: pd.DataFrame, p_lbd: float):
     mu, sgm = net_ret_df.mean() * a, net_ret_df.cov() * a
     w, _ = minimize_utility(t_mu=mu.values, t_sigma=sgm.values, t_lbd=p_lbd)
     w_norm = w / np.abs(w).sum()
-    print("min_uty weight:", w_norm)
+    # print("min_uty weight:", w_norm)
     adj_return_df: pd.DataFrame = net_ret_df.multiply(w_norm, axis=1)
     return adj_return_df.sum(axis=1)
 
@@ -212,7 +212,7 @@ def plot_base_assets_rolling_corr(selected_net_ret_df: pd.DataFrame, win: int, s
                     res[f"{v0}和{v1}"] = __get_corr(df, v0, v1, win)
         return pd.DataFrame(res)
 
-    print(selected_net_ret_df.corr())
+    # print(selected_net_ret_df.corr())
     adj_ret_rolling_cor = __get_rolling_corr(selected_net_ret_df)
     artist = CPlotLines(
         plot_df=adj_ret_rolling_cor,
@@ -283,6 +283,9 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
         )
         artist.plot()
 
+        opt_ret_df.to_csv(os.path.join(save_dir, f"opt-ret-{comb_id}.csv.gz"),
+                          index_label="trade_date", float_format="%.8f")
+
     summary_df = pd.DataFrame(summary)
     summary_df.set_index(["method", "comb_id"], inplace=True)
     summary_save_df = summary_df[performance_indicators]
@@ -301,8 +304,8 @@ if __name__ == "__main__":
     output_dir = os.path.join("..", "data", "output")
     calendar_path = "E:\\Deploy\\Data\\Calendar\\cne_calendar.csv"
     bgn_date, stp_date = "20180101", "20230801"
-    lbd = float(sys.argv[1])  # suggest value = [20~100]
-    trn_win = int(sys.argv[2])
+    lbd = float(sys.argv[1])  # suggested value = 50
+    trn_win = int(sys.argv[2])  # suggested value = 12
     min_model_days = int(trn_win * 21 * 0.9)
     calendar = CCalendarMonthly(calendar_path)
     header_df = get_header_df(bgn_date, stp_date, calendar)
