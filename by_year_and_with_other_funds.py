@@ -18,6 +18,21 @@ adj_return_df.rename(mapper={"动态效用最优": "GH"}, axis=1, inplace=True)
 adj_return_df.index = adj_return_df.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
 adj_nav_df = (1 + adj_return_df).cumprod()
 
+# --- by year
+summary_by_year_data = {}
+adj_return_df["trade_year"] = adj_return_df.index.map(lambda z: z[0:4])
+for trade_year, trade_year_df in adj_return_df.groupby(by="trade_year"):
+    nav = CNAV(trade_year_df["GH"], t_annual_rf_rate=0, t_type="ret")
+    nav.cal_all_indicators(t_qs=(1, 5))
+    summary_by_year_data[trade_year] = nav.to_dict(t_type="eng")
+summary_by_year_df = pd.DataFrame.from_dict(summary_by_year_data, orient="index")
+summary_by_year_df = summary_by_year_df[performance_indicators]
+summary_by_year_df.to_csv(
+    os.path.join(output_dir, "performance_GH_by_year.csv"),
+    index_label="trade_year", float_format="%.6f",
+)
+print(summary_by_year_df)
+
 other_funds_df = pd.read_excel(
     os.path.join(input_dir, "CTA观察池-0821.xlsx"), sheet_name="无公式版", header=1,
 )[["基金简称", "上海宽德卓越", "九坤量化CTA私募1号", "黑翼CTA-T1", "洛书尊享CTA拾壹号", "永安千象6期基金"]]
@@ -52,11 +67,11 @@ for p in merged_df.columns:
 summary_df = pd.DataFrame.from_dict(summary_data, orient="index")
 summary_df = summary_df[performance_indicators]
 print(summary_df)
-summary_df.to_csv(os.path.join(output_dir, "comparison_funds_performance.csv"), index_label="funds", float_format="%.2f")
+summary_df.to_csv(os.path.join(output_dir, "performance_other_funds.csv"), index_label="funds", float_format="%.2f")
 
 artist = CPlotLines(
     plot_df=merged_df.rename(mapper={"GH": "国海量化"}, axis=1),
-    fig_name="comparison_funds_nav", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_name="nav_with_other_funds", fig_save_dir=output_dir, fig_save_type="PNG",
     fig_size=(19, 4),
     xtick_count=11, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
