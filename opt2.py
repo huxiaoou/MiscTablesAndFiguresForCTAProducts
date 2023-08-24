@@ -178,6 +178,7 @@ def get_base_assets_brief(net_ret_df: pd.DataFrame, performance_indicators: list
 
 def plot_base_assets_nav(selected_net_ret_df: pd.DataFrame, save_dir: str):
     nav_df = (selected_net_ret_df + 1).cumprod()
+    nav_df.index = nav_df.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
     artist = CPlotLines(
         plot_df=nav_df,
         fig_name=f"sub-strategy-nav", fig_save_dir=save_dir, fig_save_type="PNG",
@@ -214,6 +215,7 @@ def plot_base_assets_rolling_corr(selected_net_ret_df: pd.DataFrame, win: int, s
 
     # print(selected_net_ret_df.corr())
     adj_ret_rolling_cor = __get_rolling_corr(selected_net_ret_df)
+    adj_ret_rolling_cor.index = adj_ret_rolling_cor.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
     artist = CPlotLines(
         plot_df=adj_ret_rolling_cor,
         fig_name="adj_ret_rolling_corr_opt2", fig_save_dir=save_dir, fig_save_type="PNG",
@@ -269,11 +271,11 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
             "动态效用最优": opt_dynamic_min_uty_srs,
         })
         opt_nav_df = (opt_ret_df + 1).cumprod()
-
+        opt_nav_df.index = opt_nav_df.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
         artist = CPlotLines(
             plot_df=opt_nav_df,
             fig_name=f"opt-nav-{comb_id}", fig_save_dir=save_dir, fig_save_type="PNG",
-            fig_size=(20, 6),
+            fig_size=(21, 6),
             xtick_count=10, xtick_label_rotation=0,
             style="seaborn-v0_8-poster",
             line_color=['#000080', '#4169E1', '#B0C4DE', '#DC143C', '#4682B4'],
