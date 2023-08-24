@@ -10,7 +10,7 @@ input_dir = os.path.join("..", "data", "input")
 output_dir = os.path.join("..", "data", "output")
 performance_indicators = ["hold_period_return", "annual_return", "annual_volatility",
                           "sharpe_ratio", "calmar_ratio",
-                          "max_drawdown_scale", "max_drawdown_scale_idx",
+                          "max_drawdown_scale",
                           "q01", "q05"]
 
 adj_return_df = pd.read_csv(

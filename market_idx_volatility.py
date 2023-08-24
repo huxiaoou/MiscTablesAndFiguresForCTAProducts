@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from skyrim.winterhold import plot_twinx
 from winterhold2 import CPlotLines, CPlotLinesTwinxBar
 
 pd.set_option("float_format", "{:.6f}".format)
