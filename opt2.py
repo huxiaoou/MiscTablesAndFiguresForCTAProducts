@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from skyrim.whiterun import CCalendar, CCalendarMonthly
 from skyrim.riften import CNAV
+from winterhold2 import CPlotLines
 
 
 def get_header_df(b_date: str, s_date: str, p_calendar: CCalendar) -> pd.DataFrame:
@@ -156,7 +157,7 @@ class COptDynamicMinVol(COptDynamic):
         return minimize_variance(t_sigma=sgm.values)
 
 
-def get_base_assets_brief(net_ret_df: pd.DataFrame):
+def get_base_assets_brief(net_ret_df: pd.DataFrame, performance_indicators: list[str], save_dir: str):
     summary = []
     for asset_id in net_ret_df.columns:
         nav = CNAV(net_ret_df[asset_id], t_annual_rf_rate=0, t_type="RET")
@@ -166,11 +167,68 @@ def get_base_assets_brief(net_ret_df: pd.DataFrame):
         summary.append(d)
     summary_df = pd.DataFrame(summary)
     summary_df.set_index("asset_id", inplace=True)
-    print(summary_df[["annual_return", "annual_volatility", "sharpe_ratio", "calmar_ratio", "max_drawdown_scale"]])
+    summary_save_df = summary_df[performance_indicators]
+    summary_save_df.to_csv(
+        os.path.join(save_dir, "summary-sub-strategy.csv"),
+        index_label="strategy", float_format="%.2f"
+    )
+    print(summary_save_df)
     return 0
 
 
-def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, **kwargs):
+def plot_base_assets_nav(selected_net_ret_df: pd.DataFrame, save_dir: str):
+    nav_df = (selected_net_ret_df + 1).cumprod()
+    artist = CPlotLines(
+        plot_df=nav_df,
+        fig_name=f"sub-strategy-nav", fig_save_dir=save_dir, fig_save_type="PNG",
+        fig_size=(19, 5),
+        xtick_count=10, xtick_label_rotation=0,
+        style="seaborn-v0_8-poster",
+        line_color=['#000080', '#4169E1', '#B0C4DE', '#DC143C', '#4682B4'],
+        xtick_label_size=16, ytick_label_size=16,
+        legend_fontsize=16,
+    )
+    artist.plot()
+    return 0
+
+
+def plot_base_assets_rolling_corr(selected_net_ret_df: pd.DataFrame, win: int, save_dir: str):
+    def __get_corr(df: pd.DataFrame, x: str, y: str, w: int):
+        x_aver = df[x].rolling(window=w).mean()
+        y_aver = df[y].rolling(window=w).mean()
+        xy_aver = (df[x] * df[y]).rolling(window=w).mean()
+        xx_aver = (df[x] * df[x]).rolling(window=w).mean()
+        yy_aver = (df[y] * df[y]).rolling(window=w).mean()
+        cov_xy = xy_aver - x_aver * y_aver
+        cov_xx = xx_aver - x_aver * x_aver
+        cov_yy = yy_aver - y_aver * y_aver
+        return cov_xy / np.sqrt(cov_xx * cov_yy)
+
+    def __get_rolling_corr(df: pd.DataFrame) -> pd.DataFrame:
+        res = {}
+        for v0 in df.columns:
+            for v1 in df.columns:
+                if v0 < v1:
+                    res[f"{v0}和{v1}"] = __get_corr(df, v0, v1, win)
+        return pd.DataFrame(res)
+
+    print(selected_net_ret_df.corr())
+    adj_ret_rolling_cor = __get_rolling_corr(selected_net_ret_df)
+    artist = CPlotLines(
+        plot_df=adj_ret_rolling_cor,
+        fig_name="adj_ret_rolling_corr_opt2", fig_save_dir=save_dir, fig_save_type="PNG",
+        fig_size=(16, 7),
+        xtick_count=9, xtick_label_rotation=0,
+        style="seaborn-v0_8-poster",
+        line_color=['#000080', '#4169E1', '#B0C4DE'],
+        xtick_label_size=16, ytick_label_size=16,
+        legend_fontsize=16, legend_loc="lower center",
+    )
+    artist.plot()
+    return 0
+
+
+def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_indicators: list[str], save_dir: str, **kwargs):
     def __get_ret_statistics(ret_srs: pd.Series, _method_id: str, _comb_id: str) -> dict:
         nav = CNAV(ret_srs, t_annual_rf_rate=0, t_type="RET")
         nav.cal_all_indicators()
@@ -186,15 +244,15 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, **kwargs):
         opt_vanilla_srs = opt_vanilla(net_ret_df[selected_cols])
         summary.append(__get_ret_statistics(opt_vanilla_srs, "vanilla", comb_id))
 
-        # opt_static_eql_vol_srs = opt_static_eql_vol(net_ret_df[selected_cols])
-        # summary.append(__get_ret_statistics(opt_static_eql_vol_srs, "static_eql_vol", comb_id))
+        opt_static_eql_vol_srs = opt_static_eql_vol(net_ret_df[selected_cols])
+        summary.append(__get_ret_statistics(opt_static_eql_vol_srs, "static_eql_vol", comb_id))
 
-        # opt_static_min_uty_srs = opt_static_min_uty(net_ret_df[selected_cols], p_lbd=p_lbd)
-        # summary.append(__get_ret_statistics(opt_static_min_uty_srs, "static_min_uty", comb_id))
+        opt_static_min_uty_srs = opt_static_min_uty(net_ret_df[selected_cols], p_lbd=p_lbd)
+        summary.append(__get_ret_statistics(opt_static_min_uty_srs, "static_min_uty", comb_id))
 
-        optimizer = COptDynamicMinUty(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
-        opt_dynamic_min_uty_srs = optimizer.main()
-        summary.append(__get_ret_statistics(opt_dynamic_min_uty_srs, "dynami_min_uty", comb_id))
+        # optimizer = COptDynamicMinUty(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
+        # opt_dynamic_min_uty_srs = optimizer.main()
+        # summary.append(__get_ret_statistics(opt_dynamic_min_uty_srs, "dynami_min_uty", comb_id))
 
         optimizer = COptDynamicMinUty3(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
         opt_dynamic_min_uty_srs = optimizer.main()
@@ -204,10 +262,32 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, **kwargs):
         # opt_dynamic_min_vol_srs = optimizer.main()
         # summary.append(__get_ret_statistics(opt_dynamic_min_vol_srs, "dynami_min_vol", comb_id))
 
+        opt_ret_df = pd.DataFrame({
+            "简单等权": opt_vanilla_srs,
+            "全局等波动": opt_static_eql_vol_srs,
+            "全局效用最优": opt_static_min_uty_srs,
+            "动态效用最优": opt_dynamic_min_uty_srs,
+        })
+        opt_nav_df = (opt_ret_df + 1).cumprod()
+
+        artist = CPlotLines(
+            plot_df=opt_nav_df,
+            fig_name=f"opt-nav-{comb_id}", fig_save_dir=save_dir, fig_save_type="PNG",
+            fig_size=(20, 6),
+            xtick_count=10, xtick_label_rotation=0,
+            style="seaborn-v0_8-poster",
+            line_color=['#000080', '#4169E1', '#B0C4DE', '#DC143C', '#4682B4'],
+            line_style=['-.'] * 3 + ['-'],
+            xtick_label_size=16, ytick_label_size=16,
+            legend_fontsize=16,
+        )
+        artist.plot()
+
     summary_df = pd.DataFrame(summary)
     summary_df.set_index(["method", "comb_id"], inplace=True)
-    summary_df = summary_df[["annual_return", "annual_volatility", "sharpe_ratio", "calmar_ratio", "max_drawdown_scale"]]
-    print(summary_df)
+    summary_save_df = summary_df[performance_indicators]
+    summary_save_df.to_csv(os.path.join(save_dir, "summary-opt-nav.csv"), float_format="%.2f")
+    print(summary_save_df)
     return 0
 
 
@@ -215,6 +295,7 @@ if __name__ == "__main__":
     import sys
 
     pd.set_option("display.width", 0)
+    selected_indicators = ["hold_period_return", "annual_return", "annual_volatility", "sharpe_ratio", "calmar_ratio", "max_drawdown_scale"]
 
     input_dir = os.path.join("..", "data", "input")
     output_dir = os.path.join("..", "data", "output")
@@ -240,9 +321,14 @@ if __name__ == "__main__":
         "huxo-pes": huxo_pes_srs,
         "huxo-opt": huxo_opt_srs,
     })
+    selected_sub_strategy_df = all_assets_ret_df[[
+        "qian-pes", "yuex-pes", "huxo-pes"
+    ]].rename(mapper={"qian-pes": "子策略一", "yuex-pes": "子策略二", "huxo-pes": "子策略三"}, axis=1)
 
-    get_base_assets_brief(all_assets_ret_df)
-    get_opt_assets_brief(net_ret_df=all_assets_ret_df, p_lbd=lbd,
+    get_base_assets_brief(all_assets_ret_df, save_dir=output_dir, performance_indicators=selected_indicators)
+    plot_base_assets_nav(selected_net_ret_df=selected_sub_strategy_df, save_dir=output_dir)
+    plot_base_assets_rolling_corr(selected_net_ret_df=selected_sub_strategy_df, win=60, save_dir=output_dir)
+    get_opt_assets_brief(net_ret_df=all_assets_ret_df, p_lbd=lbd, save_dir=output_dir, performance_indicators=selected_indicators,
                          header=header_df,
                          p_trn_win=trn_win, p_min_model_days=min_model_days,
                          p_bgn_date=bgn_date, p_stp_date=stp_date, p_calendar=calendar)
