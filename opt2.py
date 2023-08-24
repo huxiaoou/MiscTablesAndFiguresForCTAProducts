@@ -91,6 +91,7 @@ class COptDynamic(object):
         self.header = header
         self.bgn_date, self.stp_date = p_bgn_date, p_stp_date
         self.calendar = p_calendar
+        self.model_df = pd.DataFrame()
 
     def __load_train_dates(self):
         train_dates = []
@@ -103,7 +104,7 @@ class COptDynamic(object):
     def _optimization(self, mu: pd.Series, sgm: pd.DataFrame) -> (np.ndarray, float):
         pass
 
-    def __get_model_data(self):
+    def __cal_model_data(self):
         a = 252
         default_weights = pd.Series(data=[1 / 3, 1 / 3, 1 / 3], index=self.net_ret_df.columns)
         model_data = {}
@@ -123,14 +124,22 @@ class COptDynamic(object):
                     ws = pd.Series(data=w, index=mu.index)
             trade_date = self.calendar.get_next_date(train_end_date, 2)
             model_data[trade_date] = ws / ws.abs().sum()
-        return pd.DataFrame.from_dict(model_data, orient="index")
+        self.model_df = pd.DataFrame.from_dict(model_data, orient="index")
+        return 0
 
     def main(self):
-        model_df = self.__get_model_data()
-        weight_df = pd.merge(left=self.header, right=model_df, left_on="trade_date", right_index=True, how="left")
+        self.__cal_model_data()
+        weight_df = pd.merge(left=self.header, right=self.model_df, left_on="trade_date", right_index=True, how="left")
         weight_df = weight_df.set_index("trade_date").fillna(method="ffill").fillna(method="bfill")
         adj_return_df: pd.DataFrame = self.net_ret_df * weight_df
         return adj_return_df.sum(axis=1)
+
+    def save_model(self, save_dir: str, save_id: str):
+        self.model_df.to_csv(
+            os.path.join(save_dir, f"model-{save_id}.csv.gz"),
+            index_label="trade_date", float_format="%.4f",
+        )
+        return 0
 
 
 class COptDynamicWithLambda(COptDynamic):
@@ -258,6 +267,7 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
 
         optimizer = COptDynamicMinUty3(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
         opt_dynamic_min_uty_srs = optimizer.main()
+        optimizer.save_model(save_dir=save_dir, save_id=comb_id)
         summary.append(__get_ret_statistics(opt_dynamic_min_uty_srs, "dynami_min_uty3", comb_id))
 
         # optimizer = COptDynamicMinVol(net_ret_df=net_ret_df[selected_cols], **kwargs)
