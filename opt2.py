@@ -65,7 +65,7 @@ def opt_static_eql_vol(net_ret_df: pd.DataFrame):
     net_return_std = net_ret_df.std()
     weight_srs = 1 / net_return_std
     weight_srs = weight_srs / weight_srs.sum()
-    # print("eql_vol weight:", weight_srs.values)
+    print("eql_vol weight:", weight_srs.values)
     adj_return_df: pd.DataFrame = net_ret_df.multiply(weight_srs, axis=1)
     return adj_return_df.sum(axis=1)
 
@@ -76,7 +76,7 @@ def opt_static_min_uty(net_ret_df: pd.DataFrame, p_lbd: float):
     mu, sgm = net_ret_df.mean() * a, net_ret_df.cov() * a
     w, _ = minimize_utility(t_mu=mu.values, t_sigma=sgm.values, t_lbd=p_lbd)
     w_norm = w / np.abs(w).sum()
-    # print("min_uty weight:", w_norm)
+    print("min_uty weight:", w_norm)
     adj_return_df: pd.DataFrame = net_ret_df.multiply(w_norm, axis=1)
     return adj_return_df.sum(axis=1)
 
@@ -154,7 +154,7 @@ class COptDynamicWithLambda(COptDynamic):
 class COptDynamicMinUty(COptDynamicWithLambda):
     def _optimization(self, mu: pd.Series, sgm: pd.DataFrame):
         from markarth2 import minimize_utility_con
-        return minimize_utility_con(t_mu=mu.values, t_sigma=sgm.values, t_lbd=self.lbd, t_bounds=(0.05, 0.6), t_pos_lim=(0.4, 1))
+        return minimize_utility_con(t_mu=mu.values, t_sigma=sgm.values, t_lbd=self.lbd, t_bounds=(0.1, 0.5), t_pos_lim=(0.4, 1))
 
 
 class COptDynamicMinUty3(COptDynamicWithLambda):

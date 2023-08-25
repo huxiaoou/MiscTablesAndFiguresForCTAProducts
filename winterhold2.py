@@ -78,7 +78,10 @@ class CPlotAdjustAxes(CPlotBase):
         self.ax.set_ylim(self.ylim[0], self.ylim[1])
         self.ax.tick_params(axis="x", labelsize=self.xtick_label_size, rotation=self.xtick_label_rotation)
         self.ax.tick_params(axis="y", labelsize=self.ytick_label_size, rotation=self.ytick_label_rotation)
-        self.ax.legend(loc=self.legend_loc, fontsize=self.legend_fontsize)
+        if self.legend_loc is not None:
+            self.ax.legend(loc=self.legend_loc, fontsize=self.legend_fontsize)
+        else:
+            self.ax.get_legend().remove()
         plt.xticks(fontname=self.xtick_label_font)
         plt.yticks(fontname=self.ytick_label_font)
         return 0
@@ -153,18 +156,19 @@ class CPlotLines(CPlotFromDataFrame):
 
 
 class CPlotBars(CPlotFromDataFrame):
-    def __init__(self, bar_color: list = None, bar_width: float = 0.8, bar_alpha: float = 1.0,
+    def __init__(self, bar_color: list = None, bar_width: float = 0.8, bar_alpha: float = 1.0, stacked: bool = False,
                  **kwargs):
         self.bar_color = bar_color
         self.bar_width = bar_width
         self.bar_alpha = bar_alpha
+        self.stacked = stacked
         super().__init__(**kwargs)
 
     def _core(self):
         if self.bar_color:
-            self.plot_df.plot.bar(ax=self.ax, color=self.bar_color, width=self.bar_width, alpha=self.bar_alpha)
+            self.plot_df.plot.bar(ax=self.ax, color=self.bar_color, width=self.bar_width, alpha=self.bar_alpha, stacked=self.stacked)
         else:
-            self.plot_df.plot.bar(ax=self.ax, colormap=self.colormap, width=self.bar_width, alpha=self.bar_alpha)
+            self.plot_df.plot.bar(ax=self.ax, colormap=self.colormap, width=self.bar_width, alpha=self.bar_alpha, stacked=self.stacked)
         self._set_axes()
         return 0
 

@@ -13,7 +13,7 @@ performance_indicators = ["hold_period_return", "annual_return", "annual_volatil
                           "max_drawdown_scale"]
 
 adj_return_df = pd.read_csv(
-    os.path.join(output_dir, "opt-ret-pes-pes-pes.csv.gz"), dtype={"trade_date": str}).set_index("trade_date")
+    os.path.join(output_dir, "optimized-ret-pes-pes-pes.csv.gz"), dtype={"trade_date": str}).set_index("trade_date")
 adj_return_df.rename(mapper={"动态效用最优": "GH"}, axis=1, inplace=True)
 adj_return_df.index = adj_return_df.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
 adj_nav_df = (1 + adj_return_df).cumprod()
