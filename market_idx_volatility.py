@@ -48,7 +48,7 @@ artist = CPlotLines(
     fig_size=(18, 4),
     xtick_count=10, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
-    line_color=["#000080", "#4169E1", "#B0C4DE"],
+    line_color=["#DC143C", "#4169E1", "#B0C4DE"],
     xtick_label_size=18, ytick_label_size=18,
     legend_fontsize=18,
 )
