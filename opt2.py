@@ -123,7 +123,10 @@ class COptDynamic(object):
                     w, _ = self._optimization(mu, sgm)
                     ws = pd.Series(data=w, index=mu.index)
             trade_date = self.calendar.get_next_date(train_end_date, 2)
-            model_data[trade_date] = ws / ws.abs().sum()
+            if (ws_abs_sum := ws.abs().sum()) > 1:
+                model_data[trade_date] = ws / ws_abs_sum
+            else:
+                model_data[trade_date] = ws
         self.model_df = pd.DataFrame.from_dict(model_data, orient="index")
         return 0
 
@@ -150,8 +153,8 @@ class COptDynamicWithLambda(COptDynamic):
 
 class COptDynamicMinUty(COptDynamicWithLambda):
     def _optimization(self, mu: pd.Series, sgm: pd.DataFrame):
-        from skyrim.markarth import minimize_utility
-        return minimize_utility(t_mu=mu.values, t_sigma=sgm.values, t_lbd=self.lbd)
+        from markarth2 import minimize_utility_con
+        return minimize_utility_con(t_mu=mu.values, t_sigma=sgm.values, t_lbd=self.lbd, t_bounds=(0.05, 0.6), t_pos_lim=(0.4, 1))
 
 
 class COptDynamicMinUty3(COptDynamicWithLambda):
@@ -261,14 +264,14 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
         opt_static_min_uty_srs = opt_static_min_uty(net_ret_df[selected_cols], p_lbd=p_lbd)
         summary.append(__get_ret_statistics(opt_static_min_uty_srs, "static_min_uty", comb_id))
 
-        # optimizer = COptDynamicMinUty(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
-        # opt_dynamic_min_uty_srs = optimizer.main()
-        # summary.append(__get_ret_statistics(opt_dynamic_min_uty_srs, "dynami_min_uty", comb_id))
-
-        optimizer = COptDynamicMinUty3(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
+        optimizer = COptDynamicMinUty(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs)
         opt_dynamic_min_uty_srs = optimizer.main()
         optimizer.save_model(save_dir=save_dir, save_id=comb_id)
-        summary.append(__get_ret_statistics(opt_dynamic_min_uty_srs, "dynami_min_uty3", comb_id))
+        summary.append(__get_ret_statistics(opt_dynamic_min_uty_srs, "dynami_min_uty", comb_id))
+
+        # optimizer = COptDynamicMinUty3(p_lbd=p_lbd, net_ret_df=net_ret_df[selected_cols], **kwargs) # this model allows short position in sub-assets
+        # opt_dynamic_min_uty3_srs = optimizer.main()
+        # summary.append(__get_ret_statistics(opt_dynamic_min_uty3_srs, "dynami_min_uty3", comb_id))
 
         # optimizer = COptDynamicMinVol(net_ret_df=net_ret_df[selected_cols], **kwargs)
         # opt_dynamic_min_vol_srs = optimizer.main()
@@ -295,7 +298,7 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
         )
         artist.plot()
 
-        opt_ret_df.to_csv(os.path.join(save_dir, f"opt-ret-{comb_id}.csv.gz"),
+        opt_ret_df.to_csv(os.path.join(save_dir, f"optimized-ret-{comb_id}.csv.gz"),
                           index_label="trade_date", float_format="%.8f")
 
     summary_df = pd.DataFrame(summary)
@@ -316,7 +319,7 @@ if __name__ == "__main__":
     output_dir = os.path.join("..", "data", "output")
     calendar_path = "E:\\Deploy\\Data\\Calendar\\cne_calendar.csv"
     bgn_date, stp_date = "20180101", "20230801"
-    lbd = float(sys.argv[1])  # suggested value = 50
+    lbd = float(sys.argv[1])  # suggested value = 25
     trn_win = int(sys.argv[2])  # suggested value = 12
     min_model_days = int(trn_win * 21 * 0.9)
     calendar = CCalendarMonthly(calendar_path)
