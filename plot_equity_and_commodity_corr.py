@@ -19,6 +19,8 @@ nav_df.rename(mapper={"NH0100.NHF": "南华商品", "000905.SH": "中证500", "C
 ret_df: pd.DataFrame = nav_df / nav_df.shift(1) - 1
 ret_df.fillna(0, inplace=True)
 corr_df = raw_df.corr()
+nav_df_since_202306 = nav_df.loc[nav_df.index >= "2023-06-01"]
+nav_df_since_202306 = nav_df_since_202306 / nav_df_since_202306.iloc[0]
 
 print(raw_df)
 print(nav_df)
@@ -29,12 +31,24 @@ cols = ["南华商品", "中证500"]
 artist = CPlotLines(
     plot_df=nav_df[cols],
     fig_name="assets_trend", fig_save_dir=output_dir, fig_save_type="PNG",
-    fig_size=(16, 6),
+    fig_size=(16, 4),
     xtick_count=9, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
     line_color=['#000080', '#4169E1'],
-    xtick_label_size=18, ytick_label_size=18,
-    legend_fontsize=18,
+    xtick_label_size=16, ytick_label_size=16,
+    legend_fontsize=16,
+)
+artist.plot()
+
+artist = CPlotLines(
+    plot_df=nav_df_since_202306[cols],
+    fig_name="assets_trend_since_202306", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(16, 3),
+    xtick_count=8, xtick_label_rotation=0,
+    style="seaborn-v0_8-poster",
+    line_color=['#000080', '#4169E1'],
+    xtick_label_size=16, ytick_label_size=16,
+    legend_fontsize=16,
 )
 artist.plot()
 
