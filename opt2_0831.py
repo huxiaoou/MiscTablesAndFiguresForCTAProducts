@@ -225,7 +225,7 @@ def plot_base_assets_rolling_corr(selected_net_ret_df: pd.DataFrame, win: int, s
                     res[f"{v0}和{v1}"] = __get_corr(df, v0, v1, win)
         return pd.DataFrame(res)
 
-    # print(selected_net_ret_df.corr())
+    print(selected_net_ret_df.corr())
     adj_ret_rolling_cor = __get_rolling_corr(selected_net_ret_df)
     adj_ret_rolling_cor.index = adj_ret_rolling_cor.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
     artist = CPlotLines(
