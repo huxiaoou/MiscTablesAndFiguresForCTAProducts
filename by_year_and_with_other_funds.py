@@ -34,7 +34,7 @@ summary_by_year_df.to_csv(
 print(summary_by_year_df)
 
 other_funds_df = pd.read_excel(
-    os.path.join(input_dir, "CTA观察池-0821.xlsx"), sheet_name="无公式版", header=1,
+    os.path.join(input_dir, "CTA观察池-0831.xlsx"), sheet_name="无公式版", header=1,
 )[["基金简称", "上海宽德卓越", "九坤量化CTA私募1号", "黑翼CTA-T1", "洛书尊享CTA拾壹号", "永安千象6期基金"]]
 other_funds_df.rename(mapper={
     "基金简称": "trade_date",

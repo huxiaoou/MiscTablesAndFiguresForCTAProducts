@@ -35,9 +35,9 @@ artist = CPlotBars(
 artist.plot()
 
 # plot static eql vol / data is from the print output of opt2.py
-src_pos_df["子策略一"] = 0.20023706
-src_pos_df["子策略二"] = 0.40008547
-src_pos_df["子策略三"] = 0.39967748
+src_pos_df["子策略一"] = 0.20065149
+src_pos_df["子策略二"] = 0.39998992
+src_pos_df["子策略三"] = 0.39935859
 artist = CPlotBars(
     plot_df=src_pos_df, bar_color=["#00008B", "#4169E1", "#B0C4DE"], stacked=True,
     fig_size=(10, 3), fig_name="weight_sub_strategy_sta_eql_vol", fig_save_dir=output_dir, fig_save_type="PNG",
@@ -48,9 +48,9 @@ artist = CPlotBars(
 artist.plot()
 
 # plot static min uty / data is from the print output of opt2.py
-src_pos_df["子策略一"] = 0.26961431
-src_pos_df["子策略二"] = 0.54783229
-src_pos_df["子策略三"] = 0.18255340
+src_pos_df["子策略一"] = 0.26383158
+src_pos_df["子策略二"] = 0.52177195
+src_pos_df["子策略三"] = 0.21439647
 artist = CPlotBars(
     plot_df=src_pos_df, bar_color=["#00008B", "#4169E1", "#B0C4DE"], stacked=True,
     fig_size=(10, 3), fig_name="weight_sub_strategy_sta_min_uty", fig_save_dir=output_dir, fig_save_type="PNG",
