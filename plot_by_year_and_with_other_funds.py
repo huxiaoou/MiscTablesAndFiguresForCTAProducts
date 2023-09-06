@@ -12,11 +12,18 @@ performance_indicators = ["hold_period_return", "annual_return", "annual_volatil
                           "sharpe_ratio", "calmar_ratio",
                           "max_drawdown_scale"]
 
+merged_df_stp_date = "2023-09-01"
+
 adj_return_df = pd.read_csv(
     os.path.join(output_dir, "optimized-ret-pes-pes-pes.csv.gz"), dtype={"trade_date": str}).set_index("trade_date")
 adj_return_df.rename(mapper={"动态效用最优": "GH"}, axis=1, inplace=True)
 adj_return_df.index = adj_return_df.index.map(lambda z: "-".join([z[0:4], z[4:6], z[6:8]]))
-adj_nav_df = (1 + adj_return_df).cumprod()
+# adj_nav_df = (1 + adj_return_df).cumprod()
+adj_nav_df = pd.DataFrame({
+    "GH-30": (adj_return_df["GH"] * 3 + 1).cumprod(),
+    "GH-20": (adj_return_df["GH"] * 2 + 1).cumprod(),
+    "GH-10": (adj_return_df["GH"] * 1 + 1).cumprod(),
+})
 
 # --- by year
 summary_by_year_data = {}
@@ -51,13 +58,13 @@ other_funds_df = other_funds_df.replace("查询无数据", None).fillna(method="
 other_funds_df = other_funds_df.loc[other_funds_df.index <= "2023-08-01"]
 
 merged_df = pd.merge(
-    left=adj_nav_df[["GH"]], right=other_funds_df,
+    left=adj_nav_df, right=other_funds_df,
     left_index=True, right_index=True,
     how="right"
 ).fillna(method="ffill").fillna(1)
-merged_df = merged_df.loc[merged_df.index < "2023-07-01"]
+merged_df = merged_df.loc[merged_df.index < merged_df_stp_date]
 merged_df = merged_df / merged_df.iloc[0]
-print(merged_df)
+# print(merged_df)
 
 summary_data = {}
 for p in merged_df.columns:
@@ -66,16 +73,38 @@ for p in merged_df.columns:
     summary_data[p] = nav.to_dict(t_type="eng")
 summary_df = pd.DataFrame.from_dict(summary_data, orient="index")
 summary_df = summary_df[performance_indicators]
-print(summary_df)
 summary_df.to_csv(os.path.join(output_dir, "performance_other_funds.csv"), index_label="funds", float_format="%.2f")
+print(summary_df)
+
+plot_df: pd.DataFrame = merged_df.rename(mapper={
+    "GH-10": "国海量化[10%仓位]",
+    "GH-20": "国海量化[20%仓位]",
+    "GH-30": "国海量化[30%仓位]",
+}, axis=1)
+plot_df_since_2022 = plot_df.truncate(before="2022-01-01")
+plot_df_since_2022 = plot_df_since_2022 / plot_df_since_2022.iloc[0]
 
 artist = CPlotLines(
-    plot_df=merged_df.rename(mapper={"GH": "国海量化"}, axis=1),
+    plot_df=plot_df,
     fig_name="nav_with_other_funds", fig_save_dir=output_dir, fig_save_type="PNG",
     fig_size=(19, 4),
     xtick_count=11, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
-    line_color=['#DC143C', '#000080', '#4B0082', '#4169E1', '#4682B4', '#B0C4DE'],
+    line_color=['#DC143C', '#DB7093', '#FF1493', '#000080', '#4B0082', '#4169E1', '#4682B4', '#B0C4DE'],
+    line_style=["-"] * 3 + ["-."] * 5,
+    xtick_label_size=16, ytick_label_size=16,
+    legend_fontsize=16,
+)
+artist.plot()
+
+artist = CPlotLines(
+    plot_df=plot_df_since_2022,
+    fig_name="nav_with_other_funds_since_2022", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(19, 4),
+    xtick_count=11, xtick_label_rotation=0,
+    style="seaborn-v0_8-poster",
+    line_color=['#DC143C', '#DB7093', '#FF1493', '#000080', '#4B0082', '#4169E1', '#4682B4', '#B0C4DE'],
+    line_style=["-"] * 3 + ["-."] * 5,
     xtick_label_size=16, ytick_label_size=16,
     legend_fontsize=16,
 )

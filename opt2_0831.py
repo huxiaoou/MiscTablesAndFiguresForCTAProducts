@@ -317,8 +317,8 @@ if __name__ == "__main__":
 
     input_dir = os.path.join("..", "data", "input")
     output_dir = os.path.join("..", "data", "output")
-    # calendar_path = "E:\\Deploy\\Data\\Calendar\\cne_calendar.csv"
-    calendar_path = "G:\\Database\\Calendar\\cne_calendar.csv"
+    calendar_path = "E:\\Deploy\\Data\\Calendar\\cne_calendar.csv"
+    # calendar_path = "G:\\Database\\Calendar\\cne_calendar.csv"
     bgn_date, stp_date = "20180101", "20230901"
     lbd = float(sys.argv[1])  # suggested value = 25
     trn_win = int(sys.argv[2])  # suggested value = 12

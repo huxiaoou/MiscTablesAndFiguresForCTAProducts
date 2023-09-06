@@ -9,6 +9,8 @@ pd.set_option("display.width", 0)
 input_dir = os.path.join("..", "data", "input")
 output_dir = os.path.join("..", "data", "output")
 
+merged_df_stp_date = "2023-09-01"
+
 raw_file = "extra.xlsx"
 raw_path = os.path.join(input_dir, raw_file)
 raw_df = pd.read_excel(raw_path, sheet_name="daily_ret")
@@ -22,7 +24,7 @@ nav_df = nav_df.loc[nav_df.index >= "2018-01-01"]
 nav_df = nav_df / nav_df.iloc[0]
 
 merged_df = pd.merge(left=nav_df, right=volatility_df, left_index=True, right_index=True, how="left", suffixes=("", "-21日滚动波动率"))
-merged_df: pd.DataFrame = merged_df.loc[merged_df.index < "2023-07-01"]
+merged_df: pd.DataFrame = merged_df.loc[merged_df.index < merged_df_stp_date]
 merged_df.sort_index(inplace=True)
 print(merged_df)
 print(merged_df.median())
