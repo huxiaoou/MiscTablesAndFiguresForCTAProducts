@@ -244,6 +244,29 @@ class CPlotLinesTwinxBar(CPlotLinesTwinx):
         return 0
 
 
+class CPlotLinesTwinxLine(CPlotLinesTwinx):
+    def __init__(self, plot_df: pd.DataFrame, primary_cols: list[str], secondary_cols: list[str],
+                 second_line_width: float = 2, second_line_style: list = None, second_line_color: list = None,
+                 second_colormap: str = None,
+                 **kwargs):
+        self.second_line_df = plot_df[secondary_cols]
+        self.ax_twin: plt.Axes | None = None
+        self.second_line_width = second_line_width
+        self.second_line_style = second_line_style
+        self.second_line_color = second_line_color
+        self.second_colormap = second_colormap
+        super().__init__(plot_df=plot_df[primary_cols], **kwargs)
+
+    def _core(self):
+        self.ax_twin = self.ax.twinx()
+        if self.second_line_color:
+            self.second_line_df.plot.line(ax=self.ax_twin, lw=self.second_line_width, style=self.second_line_style if self.line_style else "-", color=self.second_line_color)
+        else:
+            self.second_line_df.plot.line(ax=self.ax_twin, lw=self.second_line_width, style=self.second_line_style if self.line_style else "-", colormap=self.second_colormap)
+        super()._core()
+        return 0
+
+
 class CPlotSingleNavWithDrawdown(CPlotLinesTwinxBar):
     def __init__(self, nav_srs: pd.Series, nav_label: str, drawdown_label: str,
                  nav_line_color: list = None, nav_line_width: float = 2.0,
