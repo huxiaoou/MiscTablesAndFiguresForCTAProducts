@@ -43,7 +43,7 @@ artist.plot()
 artist = CPlotLines(
     plot_df=nav_df_since_202306[cols],
     fig_name="assets_trend_since_202306", fig_save_dir=output_dir, fig_save_type="PNG",
-    fig_size=(16, 3),
+    fig_size=(16, 2.8),
     xtick_count=8, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
     line_color=['#000080', '#4169E1'],
@@ -72,7 +72,7 @@ simu_nav_df = (ret_df[cols + ["E80C20", "E50C50", "E20C80"]] + 1).cumprod()
 artist = CPlotLines(
     plot_df=simu_nav_df,
     fig_name="assets_trend_mix", fig_save_dir=output_dir, fig_save_type="PNG",
-    fig_size=(16, 14),
+    fig_size=(16, 14.5),
     xtick_count=8, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
     line_color=['#DC143C', '#000080', '#4169E1', '#B0C4DE', '#4682B4'],

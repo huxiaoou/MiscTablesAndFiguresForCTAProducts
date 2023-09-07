@@ -101,6 +101,7 @@ class CPlotFromDataFrame(CPlotAdjustAxes):
         else:
             xticks = None
         if xticks is not None:
+            # no available for scatter plot
             xticklabels = self.plot_df.index[xticks]
             self.ax.set_xticks(xticks)
             self.ax.set_xticklabels(xticklabels)
@@ -170,6 +171,34 @@ class CPlotBars(CPlotFromDataFrame):
         else:
             self.plot_df.plot.bar(ax=self.ax, colormap=self.colormap, width=self.bar_width, alpha=self.bar_alpha, stacked=self.stacked)
         self._set_axes()
+        return 0
+
+
+class CPlotScatter(CPlotFromDataFrame):
+    def __init__(self, point_x: str, point_y: str, point_size=None, point_color=None,
+                 annotations_using_index: bool = False, annotations: list[str] = None,
+                 annotations_location_drift: tuple = (0, 0),
+                 annotations_fontsize: int = 12,
+                 **kwargs):
+        self.point_x = point_x
+        self.point_y = point_y
+        self.point_size = point_size
+        self.point_color = point_color
+        self.annotations_using_index = annotations_using_index
+        self.annotations = annotations
+        self.annotations_location_drift = annotations_location_drift
+        self.annotations_fontsize = annotations_fontsize
+        super().__init__(**kwargs)
+
+    def _core(self):
+        self.plot_df.plot.scatter(ax=self.ax, x=self.point_x, y=self.point_y, s=self.point_size, c=self.point_color)
+        if self.annotations_using_index:
+            self.annotations = self.plot_df.index.tolist()
+        if self.annotations:
+            for loc_x, loc_y, label in zip(self.plot_df[self.point_x], self.plot_df[self.point_y], self.annotations):
+                self.ax.annotate(label, xy=(loc_x, loc_y),
+                                 xytext=(loc_x + self.annotations_location_drift[0], loc_y + self.annotations_location_drift[1]),
+                                 fontsize=self.annotations_fontsize)
         return 0
 
 
