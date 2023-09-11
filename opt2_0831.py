@@ -279,8 +279,8 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
 
         opt_ret_df = pd.DataFrame({
             "简单等权": opt_vanilla_srs,
-            "全局等波动": opt_static_eql_vol_srs,
-            "全局效用最优": opt_static_min_uty_srs,
+            # "全局等波动": opt_static_eql_vol_srs,
+            # "全局效用最优": opt_static_min_uty_srs,
             "动态效用最优": opt_dynamic_min_uty_srs,
         })
         opt_nav_df = (opt_ret_df + 1).cumprod()
@@ -291,8 +291,10 @@ def get_opt_assets_brief(net_ret_df: pd.DataFrame, p_lbd: float, performance_ind
             fig_size=(21, 6),
             xtick_count=10, xtick_label_rotation=0,
             style="seaborn-v0_8-poster",
-            line_color=['#000080', '#4169E1', '#B0C4DE', '#DC143C', '#4682B4'],
-            line_style=['-.'] * 3 + ['-'],
+            # line_color=['#000080', '#4169E1', '#B0C4DE', '#DC143C', '#4682B4'],
+            # line_style=['-.'] * 3 + ['-'],
+            line_color=['#000080', '#DC143C'],
+            line_style=['-.'] * 1 + ['-'],
             xtick_label_size=16, ytick_label_size=16,
             legend_fontsize=16,
         )

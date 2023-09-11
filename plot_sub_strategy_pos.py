@@ -14,10 +14,10 @@ print(src_pos_df)
 # plot dynamic
 artist = CPlotBars(
     plot_df=src_pos_df, bar_color=["#00008B", "#4169E1", "#B0C4DE"], stacked=True,
-    fig_size=(10, 3), fig_name="weight_sub_strategy_dyn_min_uty", fig_save_dir=output_dir, fig_save_type="PNG",
+    fig_size=(16, 11), fig_name="weight_sub_strategy_dyn_min_uty", fig_save_dir=output_dir, fig_save_type="PNG",
     xtick_spread=3, xtick_label_rotation=90,
-    xtick_label_size=12, ytick_label_size=12,
-    legend_fontsize=12, legend_loc=None,
+    xtick_label_size=18, ytick_label_size=18,
+    legend_fontsize=18, legend_loc=None,
 )
 artist.plot()
 
