@@ -20,14 +20,14 @@ print(src_df)
 artist = CPlotLines(
     plot_df=src_df,
     fig_name="arbitrage_Y_M", fig_save_dir=output_dir, fig_save_type="PNG",
-    fig_size=(25, 12),
+    fig_size=(27, 24),
     xtick_count=10, xtick_label_rotation=0,
     style="seaborn-v0_8-poster",
     # line_color=['#000080', '#4169E1', '#B0C4DE', '#DC143C'],
     # line_style=['-', '-', '-', '-.'],
     line_color=['#000080', '#DC143C'],
     line_style=['-', '-.'],
-    xtick_label_size=16, ytick_label_size=16,
-    legend_fontsize=16,
+    xtick_label_size=18, ytick_label_size=18,
+    legend_fontsize=18,
 )
 artist.plot()
