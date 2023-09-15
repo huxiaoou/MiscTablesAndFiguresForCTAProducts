@@ -36,19 +36,30 @@ cta_index_df.rename(mapper={"时间": "trade_date",
 cta_index_df.set_index("trade_date", inplace=True)
 
 # --- by year
-summary_by_year_data = {}
+summary_by_year_data1 = {}
+summary_by_year_data2 = {}
 adj_return_df["trade_year"] = adj_return_df.index.map(lambda z: z[0:4])
 for trade_year, trade_year_df in adj_return_df.groupby(by="trade_year"):
-    nav = CNAV(trade_year_df["GH"], t_annual_rf_rate=0, t_type="ret")
-    nav.cal_all_indicators(t_qs=(1, 5))
-    summary_by_year_data[trade_year] = nav.to_dict(t_type="eng")
-summary_by_year_df = pd.DataFrame.from_dict(summary_by_year_data, orient="index")
-summary_by_year_df = summary_by_year_df[performance_indicators]
-summary_by_year_df.to_csv(
-    os.path.join(output_dir, "performance_GH_by_year.csv"),
+    nav1 = CNAV(trade_year_df["GH"] * 1, t_annual_rf_rate=0, t_type="ret")
+    nav2 = CNAV(trade_year_df["GH"] * 2, t_annual_rf_rate=0, t_type="ret")
+    nav1.cal_all_indicators(t_qs=(1, 5))
+    nav2.cal_all_indicators(t_qs=(1, 5))
+    summary_by_year_data1[trade_year] = nav1.to_dict(t_type="eng")
+    summary_by_year_data2[trade_year] = nav2.to_dict(t_type="eng")
+summary_by_year_df1 = pd.DataFrame.from_dict(summary_by_year_data1, orient="index")
+summary_by_year_df2 = pd.DataFrame.from_dict(summary_by_year_data2, orient="index")
+summary_by_year_df1 = summary_by_year_df1[performance_indicators]
+summary_by_year_df2 = summary_by_year_df2[performance_indicators]
+summary_by_year_df1.to_csv(
+    os.path.join(output_dir, "performance_GH_by_year_L1.csv"),
     index_label="trade_year", float_format="%.6f",
 )
-print(summary_by_year_df)
+summary_by_year_df2.to_csv(
+    os.path.join(output_dir, "performance_GH_by_year_L2.csv"),
+    index_label="trade_year", float_format="%.6f",
+)
+print(summary_by_year_df1)
+print(summary_by_year_df2)
 
 # --- load other funds
 other_funds_df = pd.read_excel(
